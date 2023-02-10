@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en" aria-busy="true" class="
+[@current,body]:{margin-[0] padding-[0]}
+[p]:{margin-[0]}
+[ul]:{list-style-[none] padding-[0]}
+">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stopwatch</title>
+    <style>html[aria-busy="true"], [hidden] { display:none!important }</style>
+    <script src="https://cdn.jsdelivr.net/gh/ulyssear/css-in-js-in-html@0.1.5/build/index.min.js" defer></script>
+    <script>
+        let time = {
+            hours: 0,
+            minutes: 0,
+            seconds: 0,
+            milliseconds: 0
+        };
+
+        let isStopped = true, isStarted = false;
+
+        const elements = {}
+
+        document.addEventListener('DOMContentLoaded', () => {
+            CSS_IN_JS_IN_HTML.init(document, null);
+
+            elements.stopwatch = document.querySelector('main > section > p');
+            elements.hours = elements.stopwatch.children[0];
+            elements.minutes = elements.stopwatch.children[1];
+            elements.seconds = elements.stopwatch.children[2];
+            elements.milliseconds = elements.stopwatch.children[3];
+
+            elements.controls = document.querySelector('main > section > nav')
+
+            elements.control_start = elements.controls.children[0].children[0].children[0];
+            elements.control_stop = elements.controls.children[0].children[1].children[0];
+            elements.control_reset = elements.controls.children[0].children[2].children[0];
+
+            elements.control_start.addEventListener('click', ()=>start())
+            elements.control_stop.addEventListener('click', ()=>stop())
+            elements.control_reset.addEventListener('click', ()=>reset())
+            
+            reset();
+
+            function _setValueToElement (element, value, digits = 2) {
+                if ('string' !== typeof value) value = '' + value;
+                setTimeout(function(){
+                    element.innerHTML = value.padStart(digits, '0');
+                }, 0);
+            }
+            function _updateElements({update_time = false, reset = false}) {
+                if (update_time) {
+                    if (999 < time.milliseconds) {
+                        time.seconds += Math.floor(time.milliseconds / 999);
+                        time.milliseconds = time.milliseconds % 1000;
+                    }
+                    if (59 < time.seconds) {
+                        time.minutes += Math.floor(time.seconds / 59);
+                        time.seconds = time.seconds % 60;
+                    }
+                    if (59 < time.minutes) {
+                        time.hours += Math.floor(time.minutes / 59);
+                        time.minutes = time.minutes % 60;
+                    }
+                }
+
+                for (let unit in time) {
+                    if (reset) time[unit] = 0;
+                    _setValueToElement(elements[unit], time[unit], [2,3][+(unit === 'milliseconds')]);
+                }
+            }
+            
+            function reset() {
+                _updateElements({reset: true});
+            }
+            function start() {
+                if (isStarted) return;
+                isStopped = false;
+                isStarted = true;
+                let first_timeout = Date.now(), second_timeout=0;
+                requestAnimationFrame(step);
+                function step () {
+                    if (isStopped) return;
+                    second_timeout = Date.now()
+                    while ((second_timeout - first_timeout) < 1) {
+                        requestAnimationFrame(step);
+                        return;
+                    }
+                    time.milliseconds += (second_timeout - first_timeout);
+                    _updateElements({update_time: true})
+                    first_timeout = Date.now();
+                    requestAnimationFrame(step);
+                }
+            }
+            function stop() {
+                isStopped = true;
+                isStarted = false;
+            }
+        });
+    </script>
+</head>
+<body class="min-height-[100vh] display-[grid] place-items-[center] background-[#FFF] color-[#000] font-family-[sans-serif]">
+    <main class="width-[50%] margin-inline-[auto]">
+
+        <section class="display-[grid] grid-template-columns-[1fr] place-items-[center] width-[100%]">
+            
+            <p class="display-[grid] grid-template-columns-[repeat(7,auto)] place-items-[center] width-[20ch] font-size-[3rem] text-align-[center]">
+                <span>00</span>:
+                <span>00</span>:
+                <span>00</span>.
+                <span>00</span>
+            </p>
+            
+            <nav class="width-[33.3334%]">
+                <ul class="
+                display-[grid] grid-template-columns-[repeat(3,auto)] column-gap-[1rem] grid-template-rows-[8ch] place-items-[center]
+                [> li > button]:{width-[3rem] height-[auto] aspect-ratio-[1/1] cursor-[pointer] border-[3px solid #000] color-[inherit] background-[transparent] border-radius-[50%]}
+                [> li > button > svg]:{width-[100%] height-[100%] fill-[#000]}
+                [> li > button:hover]:{background-[black] color-[white]}
+                ">
+                    <li><button>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="none" d="M0 0h24v24H0z"/><path d="M8 5v14l11-7z" fill="#000"/></svg>
+                    </button></li>
+                    <li><button>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="none" d="M0 0h24v24H0z"/><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" fill="#000"/></svg>
+                    </button></li>
+                    <li><button>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="none" d="M0 0h24v24H0z"/><path d="M6 6h12v12H6z" fill="#000"/></svg>
+                    </button></li>
+                </ul>
+            </nav>
+
+        </section>
+
+    </main>
+</body>
+</html>
